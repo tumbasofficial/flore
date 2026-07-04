@@ -10,7 +10,9 @@ export default function AdminPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
 
-  const [storyForm, setStoryForm] = useState({ title: "", genre: "Horor", synopsis: "" });
+  // Menambahkan cover_url ke dalam state form
+  const [storyForm, setStoryForm] = useState({ title: "", genre: "Horor", synopsis: "", cover_url: "" });
+  
   const [chapterForm, setChapterForm] = useState({
     story_id: "", chapter_number: "", content: "", fase: "1",
     clue_question: "", option_a: "", option_b: "", correct_option: "A",
@@ -18,14 +20,17 @@ export default function AdminPage() {
   const [bulkCodes, setBulkCodes] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
+  // PERBAIKAN 1: Membungkus session dengan setTimeout
   useEffect(() => {
-    const saved = sessionStorage.getItem("flore_admin_pw");
-    if (saved) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPassword(saved);
-      setAuthed(true);
-    }
-    setCheckingSession(false);
+    const timer = setTimeout(() => {
+      const saved = sessionStorage.getItem("flore_admin_pw");
+      if (saved) {
+        setPassword(saved);
+        setAuthed(true);
+      }
+      setCheckingSession(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const loadStats = useCallback(async () => {
@@ -35,10 +40,13 @@ export default function AdminPage() {
     if (res.ok) setStats(await res.json());
   }, [password]);
 
- useEffect(() => {
+  // PERBAIKAN 2: Membungkus loadStats dengan setTimeout
+  useEffect(() => {
     if (authed) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadStats();
+      const timer = setTimeout(() => {
+        loadStats();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [authed, loadStats]);
 
@@ -63,7 +71,7 @@ export default function AdminPage() {
     });
     setMsg(res.ok ? "Cerita ditambahkan." : "Gagal menambah cerita.");
     if (res.ok) {
-      setStoryForm({ title: "", genre: "Horor", synopsis: "" });
+      setStoryForm({ title: "", genre: "Horor", synopsis: "", cover_url: "" });
       loadStats();
     }
   }
@@ -176,6 +184,12 @@ export default function AdminPage() {
             placeholder="Sinopsis singkat"
             value={storyForm.synopsis}
             onChange={(e) => setStoryForm({ ...storyForm, synopsis: e.target.value })}
+            className="font-ui text-sm px-3 py-2 rounded-lg border border-flore-gold-light"
+          />
+          <input
+            placeholder="Link gambar cover (URL opsional)"
+            value={storyForm.cover_url}
+            onChange={(e) => setStoryForm({ ...storyForm, cover_url: e.target.value })}
             className="font-ui text-sm px-3 py-2 rounded-lg border border-flore-gold-light"
           />
           <button onClick={submitStory} className="font-ui text-sm py-2 rounded-full bg-flore-gold text-white">

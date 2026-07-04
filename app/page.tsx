@@ -7,11 +7,13 @@ import Image from "next/image";
 
 const GENRES = ["Horor", "Romance", "Misteri", "Komedi", "Petualangan"];
 
+// 1. Tambahkan cover_url pada tipe data
 type Story = {
   id: number;
   title: string;
   genre: string;
   synopsis: string | null;
+  cover_url: string | null; 
 };
 
 export default function HomePage() {
@@ -19,12 +21,10 @@ export default function HomePage() {
   const [activeGenre, setActiveGenre] = useState<string>(GENRES[0]);
   const [loading, setLoading] = useState(true);
   
-  // State untuk Intro & Session Check
   const [showIntro, setShowIntro] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // Cek apakah user sudah pernah buka pintu di sesi ini (Bebas Error ESLint)
   useEffect(() => {
     const timer = setTimeout(() => {
       const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
@@ -37,13 +37,13 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Mengambil data cerita
   useEffect(() => {
     async function load() {
       setLoading(true);
+      // 2. Tambahkan cover_url di query Supabase
       const { data } = await supabase
         .from("stories")
-        .select("id, title, genre, synopsis")
+        .select("id, title, genre, synopsis, cover_url") 
         .eq("status", "Active")
         .eq("genre", activeGenre);
       setStories(data ?? []);
@@ -52,7 +52,6 @@ export default function HomePage() {
     load();
   }, [activeGenre]);
 
-  // Fungsi saat tombol Buka Pintu diklik
   const handleEnter = () => {
     setIsFadingOut(true);
     setTimeout(() => {
@@ -61,14 +60,12 @@ export default function HomePage() {
     }, 1000);
   };
 
-  // Mencegah kedip / flash konten saat sistem sedang mengecek session
   if (isCheckingSession) {
     return <div className="min-h-screen bg-[#F4EAE0]" />;
   }
 
   return (
     <>
-      {/* LAYAR SAMBUTAN (SPLASH SCREEN) */}
       {showIntro && (
         <div
           className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-1000 ease-in-out ${
@@ -96,7 +93,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* KONTEN UTAMA */}
       <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
         <h1 className="font-display text-4xl text-flore-espresso mb-1">FLORE</h1>
         <p className="font-ui text-flore-mocha text-sm mb-8">
@@ -136,16 +132,38 @@ export default function HomePage() {
             <Link
               key={s.id}
               href={`/story/${s.id}`}
-              className="block bg-flore-peach rounded-2xl p-5 border border-flore-gold-light hover:border-flore-gold transition group"
+              // 3. Mengubah layout kartu agar bisa menampung gambar di sisi kiri
+              className="flex gap-4 bg-flore-peach rounded-2xl p-4 border border-flore-gold-light hover:border-flore-gold transition group"
             >
-              <h2 className="font-display text-2xl text-flore-espresso group-hover:text-flore-gold transition-colors">
-                {s.title}
-              </h2>
-              {s.synopsis && (
-                <p className="font-body text-flore-mocha text-sm mt-1 line-clamp-2">
-                  {s.synopsis}
-                </p>
-              )}
+              {/* WADAH GAMBAR SAMPUL */}
+              <div className="relative w-24 h-32 md:w-28 md:h-40 flex-shrink-0 rounded-lg overflow-hidden bg-[#e0d6cb]">
+                {s.cover_url ? (
+                  <Image
+                    src={s.cover_url}
+                    alt={`Cover ${s.title}`}
+                    fill
+                     unoptimized // <--- TAMBAHKAN INI
+                    className="object-cover group-hover:scale-105 transition duration-500"
+                  />
+                ) : (
+                  // 
+                  <div className="w-full h-full flex items-center justify-center text-[#5A4634] font-ui text-[10px] uppercase tracking-widest text-center px-2">
+                    No Cover
+                  </div>
+                )}
+              </div>
+
+              {/* WADAH TEKS JUDUL & SINOPSIS */}
+              <div className="flex flex-col justify-center py-2">
+                <h2 className="font-display text-2xl md:text-3xl text-flore-espresso group-hover:text-flore-gold transition-colors line-clamp-2">
+                  {s.title}
+                </h2>
+                {s.synopsis && (
+                  <p className="font-body text-flore-mocha text-sm mt-2 line-clamp-3">
+                    {s.synopsis}
+                  </p>
+                )}
+              </div>
             </Link>
           ))}
         </div>
