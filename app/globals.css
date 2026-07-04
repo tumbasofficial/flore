@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-flore-cream: #FAF0E4;
+  --color-flore-peach: #F4E1D0;
+  --color-flore-gold: #C89252;
+  --color-flore-gold-light: #E8C288;
+  --color-flore-espresso: #3E2A1E;
+  --color-flore-mocha: #7A5C46;
+  --color-flore-rose: #E8B4A0;
+
+  --font-display: var(--font-cormorant), serif;
+  --font-body: var(--font-literata), serif;
+  --font-ui: var(--font-worksans), sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+}
